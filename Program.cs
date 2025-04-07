@@ -12,27 +12,30 @@ const int TOTAL_REQUESTS = 10;
 
 HttpClient httpClient = new HttpClient { BaseAddress = new Uri(API_BASE_URL) };
 
-  async Task Main()
-    {
-        bool runAgain = false;
-        
-        do
-        {
-            await RunSimulation();
-            
-            Console.WriteLine("\nRun simulation again? (y/n)");
-            var key = Console.ReadKey().KeyChar;
-            runAgain = key == 'y' || key == 'Y';
-            Console.WriteLine();
-            
-        } while (runAgain);
-
-        Console.WriteLine("All requests completed.\n Press any key to exit...\n");
-        Console.ReadKey();
-    }
-
- async Task RunSimulation()
+async Task Main()
 {
+    bool runAgain = false;
+
+    do
+    {
+        await RunSimulation();
+
+        Console.WriteLine("\nRun simulation again? (y/n)");
+        var key = Console.ReadKey().KeyChar;
+        runAgain = key == 'y' || key == 'Y';
+        Console.WriteLine();
+
+    } while (runAgain);
+
+    Console.WriteLine("All requests completed.\n Press any key to exit...\n");
+    Console.ReadKey();
+}
+
+async Task RunSimulation()
+{
+    ////Uncomment this line if you want to clear all customers before starting the simulation
+    //await SimulateClearRequest();
+
     List<Task> tasks = new List<Task>();
     SemaphoreSlim semaphore = new SemaphoreSlim(MAX_CONCURRENT_REQUESTS);
 
@@ -131,5 +134,31 @@ async Task SimulateGetRequest()
         Console.WriteLine($"Exception in request: {ex.Message}\n");
     }
 }
+
+////If want to clear all customers, uncomment this method
+//async Task SimulateClearRequest()
+//{
+//    try
+//    {
+//        Console.WriteLine($"Request: Clear all customers\n");
+
+//        var response = await httpClient.DeleteAsync($"{END_POINT}ClearCustomers");
+
+//        if (response.IsSuccessStatusCode)
+//        {
+//            Console.WriteLine("All customers clear\n");
+//        }
+//        else
+//        {
+//            string error = await response.Content.ReadAsStringAsync();
+//            Console.WriteLine($"Error: {error}\n");
+//        }
+//    }
+//    catch (Exception ex)
+//    {
+//        Console.WriteLine($"Exception in request Delete: {ex.Message}\n");
+//    }
+//}
+
 
 await Main();
