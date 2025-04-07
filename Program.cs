@@ -77,15 +77,20 @@ async Task SimulatePostRequest()
         Console.WriteLine($"Request: POST {command.Customers.Count} customers\n");
         var response = await httpClient.PostAsync($"{END_POINT}CreateCustomers", content);
 
-        if (!response.IsSuccessStatusCode)
+        string result = await response.Content.ReadAsStringAsync();
+
+        if (response.IsSuccessStatusCode)
         {
-            string error = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Error: {error}\n");
+            Console.WriteLine($"Request POST Response: success {result}\n");
+        }
+        else
+        {
+            Console.WriteLine($"Request POST Error: {result}\n");
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Exception in request: {ex.Message}\n");
+        Console.WriteLine($"Exception in request POST: {ex.Message}\n");
     }
 }
 
