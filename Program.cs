@@ -4,8 +4,8 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 
-const string API_BASE_URL = "http://localhost:5195/"; // Localhost URL
-//const string API_BASE_URL = "https://riaapi20250407133331.azurewebsites.net/"; //Azure URL
+//const string API_BASE_URL = "http://localhost:5195/"; // Localhost URL
+const string API_BASE_URL = "https://riaapi20250407133331.azurewebsites.net/"; //Azure URL
 const string END_POINT = "Customer/";
 const int MAX_CONCURRENT_REQUESTS = 5;
 const int TOTAL_REQUESTS = 10;
