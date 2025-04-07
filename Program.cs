@@ -4,13 +4,64 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 
-//const string API_BASE_URL = "http://localhost:5195/";
-const string API_BASE_URL = "https://riaapi20250407133331.azurewebsites.net/";
+//const string API_BASE_URL = "http://localhost:5195/"; // Localhost URL
+const string API_BASE_URL = "https://riaapi20250407133331.azurewebsites.net/"; //Azure URL
 const string END_POINT = "Customer/";
 const int MAX_CONCURRENT_REQUESTS = 5;
 const int TOTAL_REQUESTS = 10;
 
 HttpClient httpClient = new HttpClient { BaseAddress = new Uri(API_BASE_URL) };
+
+  async Task Main()
+    {
+        bool runAgain = false;
+        
+        do
+        {
+            await RunSimulation();
+            
+            Console.WriteLine("\nRun simulation again? (y/n)");
+            var key = Console.ReadKey().KeyChar;
+            runAgain = key == 'y' || key == 'Y';
+            Console.WriteLine();
+            
+        } while (runAgain);
+
+        Console.WriteLine("All requests completed.\n Press any key to exit...\n");
+        Console.ReadKey();
+    }
+
+ async Task RunSimulation()
+{
+    List<Task> tasks = new List<Task>();
+    SemaphoreSlim semaphore = new SemaphoreSlim(MAX_CONCURRENT_REQUESTS);
+
+    for (int i = 0; i < TOTAL_REQUESTS; i++)
+    {
+        await semaphore.WaitAsync();
+        bool isPostRequest = i % 2 == 0;
+
+        tasks.Add(Task.Run(async () =>
+        {
+            try
+            {
+                if (isPostRequest)
+                    await SimulatePostRequest();
+                else
+                    await SimulateGetRequest();
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        }));
+
+        await Task.Delay(TimeSpan.FromMilliseconds(100));
+    }
+
+    await Task.WhenAll(tasks);
+}
+
 
 async Task SimulatePostRequest()
 {
@@ -74,41 +125,6 @@ async Task SimulateGetRequest()
     {
         Console.WriteLine($"Exception in request: {ex.Message}\n");
     }
-}
-
-async Task Main()
-{
-    List<Task> tasks = new List<Task>();
-
-    SemaphoreSlim semaphore = new SemaphoreSlim(MAX_CONCURRENT_REQUESTS);
-
-    for (int i = 0; i < TOTAL_REQUESTS; i++)
-    {
-        await semaphore.WaitAsync(); 
-
-        bool isPostRequest = i % 2 == 0;
-
-        tasks.Add(Task.Run(async () =>
-        {
-            try
-            {
-                if (isPostRequest)
-                    await SimulatePostRequest();
-                else
-                    await SimulateGetRequest();
-            }
-            finally
-            {
-                semaphore.Release();
-            }
-        }));
-
-        await Task.Delay(TimeSpan.FromMilliseconds(100));
-    }
-
-    await Task.WhenAll(tasks);
-    Console.WriteLine("All requests completed.\n Press any key to exit...");
-    Console.ReadKey();
 }
 
 await Main();
