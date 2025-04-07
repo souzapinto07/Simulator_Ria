@@ -35,6 +35,7 @@ async Task RunSimulation()
 {
     ////Uncomment this line if you want to clear all customers before starting the simulation
     //await SimulateClearRequest();
+    //return;
 
     List<Task> tasks = new List<Task>();
     SemaphoreSlim semaphore = new SemaphoreSlim(MAX_CONCURRENT_REQUESTS);
