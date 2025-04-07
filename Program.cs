@@ -1,11 +1,11 @@
-﻿using Simulator_Ria;
-using Simulator_Ria.Models;
+﻿using Simulator_Ria.Models;
+using Simulator_Ria.Services;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 
-//const string API_BASE_URL = "http://localhost:5195/"; // Localhost URL
-const string API_BASE_URL = "https://riaapi20250407133331.azurewebsites.net/"; //Azure URL
+const string API_BASE_URL = "http://localhost:5195/"; // Localhost URL
+//const string API_BASE_URL = "https://riaapi20250407133331.azurewebsites.net/"; //Azure URL
 const string END_POINT = "Customer/";
 const int MAX_CONCURRENT_REQUESTS = 5;
 const int TOTAL_REQUESTS = 10;
@@ -81,7 +81,7 @@ async Task SimulatePostRequest()
         Console.WriteLine($"Request: POST {command.Customers.Count} customers\n");
         var response = await httpClient.PostAsync($"{END_POINT}CreateCustomers", content);
 
-        string result = await response.Content.ReadAsStringAsync();
+        var result = await response.Content.ReadAsStringAsync();
 
         if (response.IsSuccessStatusCode)
         {
@@ -89,7 +89,16 @@ async Task SimulatePostRequest()
         }
         else
         {
-            Console.WriteLine($"Request POST Error: {result}\n");
+            var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(result);
+            if (errorResponse != null)
+            {
+                var formattedError = $"Message: {errorResponse.Message}\nErrors:\n{string.Join(Environment.NewLine, errorResponse.Errors)}";
+                Console.WriteLine($"Request POST Error {formattedError}\n");
+            }
+            else
+            {
+                Console.WriteLine($"Request POST Error: {result}\n");
+            }
         }
     }
     catch (Exception ex)
