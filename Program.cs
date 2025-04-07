@@ -16,8 +16,7 @@ var lastNames = new[] { "Liberty", "Ray", "Harrison", "Ronan", "Drew", "Powell",
 
 var httpClient = new HttpClient { BaseAddress = new Uri(API_BASE_URL) };
 var random = new Random();
-var idCounter = 1; 
-var requestCounter = 0;
+var idIncremental = 0; 
 
 List<Customer> GenerateRandomCustomers()
 {
@@ -29,9 +28,10 @@ List<Customer> GenerateRandomCustomers()
         var firstName = firstNames[random.Next(firstNames.Length)];
         var lastName = lastNames[random.Next(lastNames.Length)];
         var age = random.Next(minAge, maxAge + 1);
-        var id = Interlocked.Increment(ref idCounter); 
+        //var id = Interlocked.Increment(ref idCounter); 
+        idIncremental++;
 
-        customers.Add(new Customer(lastName,firstName,age, id));
+        customers.Add(new Customer(lastName,firstName,age, idIncremental));
     }
 
     return customers;
@@ -39,7 +39,6 @@ List<Customer> GenerateRandomCustomers()
 
 async Task SimulatePostRequest()
 {
-    var requestId = Interlocked.Increment(ref requestCounter);
     try
     {
         List<Customer> customers = GenerateRandomCustomers();
@@ -49,19 +48,18 @@ async Task SimulatePostRequest()
         var json = JsonSerializer.Serialize(command);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        Console.WriteLine($"Request #{requestId}: POST {command.Customers.Count} customers");
+        Console.WriteLine($"Request: POST {command.Customers.Count} customers");
         var response = await httpClient.PostAsync($"{END_POINT}CreateCustomers", content);
 
-        Console.WriteLine($"Response #{requestId}: {(int)response.StatusCode} {response.StatusCode}");
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Error #{requestId}: {error}");
+            Console.WriteLine($"Error: {error}");
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Exception in request #{requestId}: {ex.Message}");
+        Console.WriteLine($"Exception in request: {ex.Message}");
     }
 }
 async Task SimulateGetRequest()
@@ -90,8 +88,9 @@ async Task SimulateGetRequest()
                 Console.WriteLine("No customers retrieved");
             }
         }
-        else { 
-            Console.WriteLine($"Message in request: {response.Content + "-" + response.ReasonPhrase}"); 
+        else {
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error: {error}");
         }
 
      
@@ -101,24 +100,24 @@ async Task SimulateGetRequest()
         Console.WriteLine($"Exception in request: {ex.Message}");
     }
 }
+await SimulatePostRequest();
 
+//// Run parallel simulations
+//var tasks = new List<Task>();
+//for (int i = 0; i < concurrentRequests; i++)
+//{
+//    // Alternate between POST and GET requests
+//    if (i % 2 == 0)
+//    {
+//        tasks.Add(SimulatePostRequest());
+//    }
+//    else
+//    {
+//        tasks.Add(SimulateGetRequest());
+//    }
+//}
 
-// Run parallel simulations
-var tasks = new List<Task>();
-for (int i = 0; i < concurrentRequests; i++)
-{
-    // Alternate between POST and GET requests
-    if (i % 2 == 0)
-    {
-        tasks.Add(SimulatePostRequest());
-    }
-    else
-    {
-        tasks.Add(SimulateGetRequest());
-    }
-}
-
-await Task.WhenAll(tasks);
+//await Task.WhenAll(tasks);
 
 Console.WriteLine("Simulation complete. Press any key to exit...");
 Console.ReadKey();
