@@ -1,4 +1,5 @@
-﻿using Simulator_Ria.Models;
+﻿using Simulator_Ria;
+using Simulator_Ria.Models;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -7,42 +8,14 @@ const string API_BASE_URL = "http://localhost:5195/";
 const string END_POINT = "Customer/";
 const int MAX_CONCURRENT_REQUESTS = 5;
 const int TOTAL_REQUESTS = 10;
-const int MIN_CUSTOMERS_PER_REQUEST = 2;
-const int MAX_CUSTOMERS_PER_REQUEST = 5;
-const int MIN_AGE = 10;
-const int MAX_AGE = 90;
 
-
-var firstNames = new[] { "Leia", "Sadie", "Jose", "Sara", "Frank", "Dewey", "Tomas", "Joel", "Lukas", "Carlos" };
-var lastNames = new[] { "Liberty", "Ray", "Harrison", "Ronan", "Drew", "Powell", "Larsen", "Chan", "Anderson", "Lane" };
-
-var httpClient = new HttpClient { BaseAddress = new Uri(API_BASE_URL) };
-var random = new Random();
-var idIncremental = 0;
-
-List<Customer> GenerateRandomCustomers()
-{
-    var count = random.Next(MIN_CUSTOMERS_PER_REQUEST, MAX_CUSTOMERS_PER_REQUEST + 1);
-    var customers = new List<Customer>(count);
-
-    for (int i = 0; i < count; i++)
-    {
-        var firstName = firstNames[random.Next(firstNames.Length)];
-        var lastName = lastNames[random.Next(lastNames.Length)];
-        var age = random.Next(MIN_AGE, MAX_AGE + 1);
-        idIncremental++;
-
-        customers.Add(new Customer(lastName, firstName, age, idIncremental));
-    }
-
-    return customers;
-}
+HttpClient httpClient = new HttpClient { BaseAddress = new Uri(API_BASE_URL) };
 
 async Task SimulatePostRequest()
 {
     try
     {
-        List<Customer> customers = GenerateRandomCustomers();
+        List<Customer> customers = new Data().GenerateRandomCustomers();
 
         CreateCustomersCommand command = new CreateCustomersCommand(customers);
 
@@ -54,7 +27,7 @@ async Task SimulatePostRequest()
 
         if (!response.IsSuccessStatusCode)
         {
-            var error = await response.Content.ReadAsStringAsync();
+            string error = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Error: {error}\n");
         }
     }
@@ -92,7 +65,7 @@ async Task SimulateGetRequest()
         }
         else
         {
-            var error = await response.Content.ReadAsStringAsync();
+            string error = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Error: {error}\n");
         }
     }
@@ -104,9 +77,9 @@ async Task SimulateGetRequest()
 
 async Task Main()
 {
-    var tasks = new List<Task>();
+    List<Task> tasks = new List<Task>();
 
-    var semaphore = new SemaphoreSlim(MAX_CONCURRENT_REQUESTS);
+    SemaphoreSlim semaphore = new SemaphoreSlim(MAX_CONCURRENT_REQUESTS);
 
     for (int i = 0; i < TOTAL_REQUESTS; i++)
     {
@@ -133,7 +106,7 @@ async Task Main()
     }
 
     await Task.WhenAll(tasks);
-    Console.WriteLine("Simulation complete. Press any key to exit...");
+    Console.WriteLine("All requests completed.\n Press any key to exit...");
     Console.ReadKey();
 }
 
